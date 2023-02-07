@@ -1,0 +1,52 @@
+
+#CA 
+/certificate add name=CA country="US" state="MA" locality="Boston" organization="AS" unit="mk" common-name="CA" key-size=4096 days-valid=3650 key-usage=crl-sign,key-cert-sign
+/certificate sign CA ca-crl-host=127.0.0.1 name="CA"
+
+#server CRT
+/certificate add name=server country="US" state="MA" locality="Boston" organization="AS" unit="mk" common-name="server" key-size=4096 days-valid=3650 key-usage=digital-signature,key-encipherment,tls-server
+/certificate sign server ca="CA" name="server"
+
+
+#Client CRT
+/certificate add name=client country="US" state="MA" locality="Boston" organization="AS" unit="mk" common-name="client" key-size=4096 days-valid=3650 key-usage=tls-client
+/certificate sign client ca="CA" name="client"
+
+/certificate add name=crt1 copy-from="client" common-name="crt1"
+/certificate sign crt1 ca="CA" name="crt1"
+
+/certificate export-certificate CA export-passphrase=""
+/certificate export-certificate crt1 export-passphrase=<password>
+
+
+#VPN profile config
+/ip pool
+add name=ovpn ranges=192.168.87.30-192.168.87.254
+
+/ip dhcp-server network
+add address=192.168.87.0/24 comment=vpn dns-server=8.8.8.8 gateway=\
+ 192.168.1.1 netmask=24
+ 
+ /ppp profile
+add bridge=bridge dns-server=8.8.8.8 local-address=ovpn name=open_vpn \
+ remote-address=ovpn use-compression=no use-encryption=required
+/interface ovpn-server server
+set certificate=server cipher=aes256 default-profile=open_vpn enabled=yes \
+ require-client-certificate=yes
+
+#Create VPN user
+ /ppp secret
+add name=client1 password=<password> profile=open_vpn service=ovpn
+
+
+#allow vpn port
+/ip firewall filter
+add action=accept chain=input comment=VPN dst-port=443 protocol=tcp
+
+#export user crt
+crt1 export-passphrase=<password>
+
+
+#android must have aes256 encryption
+openssl rsa -aes256 -in key.key -out new-key-file.key
+rsa -in client_adr.key -out client_adr.key
