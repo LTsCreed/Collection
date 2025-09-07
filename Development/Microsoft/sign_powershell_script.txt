@@ -1,0 +1,6 @@
+# Sign
+# Crt must have EKU - Code Signing
+Set-AuthenticodeSignature -PSPath "file.ps1" -IncludeChain All -TimeStampServer "http://timestamp.digicert.com" -Certificate (Get-PfxCertificate -FilePath "codesign.pfx")
+
+# View
+Get-AuthenticodeSignature "file.ps1" | select-object *

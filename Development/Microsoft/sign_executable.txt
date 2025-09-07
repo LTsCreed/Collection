@@ -1,0 +1,4 @@
+# https://learn.microsoft.com/en-us/dotnet/framework/tools/signtool-exe
+
+# Crt must have EKU - Code Signing
+.\signtool.exe sign /debug /f codesign.pfx /t http://timestamp.digicert.com /fd SHA256 /p passwd  "main.exe"
